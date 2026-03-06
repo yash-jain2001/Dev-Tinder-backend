@@ -1,17 +1,10 @@
 const express = require("express");
 const app = express();
+const adminAuth = require("./middlewares/auth");
 
 app.use(
   "/admin",
-  (req, res, next) => {
-    const token = "abc"
-    const isAuthorized = token==='abc'
-    if(isAuthorized){
-      next();
-    }else{
-      res.status(403).send("Unauthorized");
-    }  
-  }
+  adminAuth
 );
 
 app.get("/admin/getuser",(req,res)=>{
