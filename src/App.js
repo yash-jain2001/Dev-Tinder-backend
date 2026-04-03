@@ -4,6 +4,7 @@ const User = require("./models/user");
 const app = express();
 const validateSignUpData = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const validator = require("validator");
 
 app.use(express.json());
 
@@ -37,6 +38,32 @@ console.log(passwordHash);
     res.send(`User not created, Error: ${err}`);
   }
 });
+
+//login Api
+app.post("/login", async(req, res)=>{
+  try {
+    const {email, password} = req.body;
+
+  const isEmailValid = validator.isEmail(email)
+  if(!isEmailValid){
+    throw new Error("Invalid Email")
+  }
+
+    const user = await User.findOne({email:email});
+    if(!user){
+      throw new Error("invalid credentials")
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+if(!isPasswordValid || password.length<8){
+  throw new Error("invalid credentials")
+}else{
+  res.send("Login successful")
+}
+
+  } catch (err) {
+    res.send("Login failed ERROR: "+err.message)
+  }
+})
 
 // to get some data from the database, to get single user using emailid
 app.get("/user", async (req, res) => {
@@ -100,6 +127,7 @@ app.patch("/user/:userId", async (req, res) => {
     res.send("something went wrong "+ err);
   }
 });
+
 
 connectDB()
   .then(() => {
