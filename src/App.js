@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const {userAuth} = require("./middlewares/auth.js");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -62,11 +63,11 @@ app.post("/login", async (req, res) => {
       throw new Error("invalid credentials");
     } else {
       //create JWT token
-      const token = jwt.sign({_id:user._id},"DevTinder@7370")
+      const token = jwt.sign({ _id: user._id }, "DevTinder@7370",{expiresIn:"1d"});
 
       // add token to cookie and send response back to user
 
-      res.cookie("token", token)
+      res.cookie("token", token,{expires:new Date(Date.now()+ 8*3600000)});
       res.send("Login successful");
     }
   } catch (err) {
@@ -75,37 +76,32 @@ app.post("/login", async (req, res) => {
 });
 
 //profile API
-app.get("/profile",async(req, res)=>{
-  try{
-const cookies  = req.cookies;
-const {token} = cookies;
-    //validate token
-    if(!token){
-      throw new Error("Invalid token");
-    }
-    const decodedMessage = jwt.verify(token,"DevTinder@7370");
-    // console.log(decodedMessage);
-    const {_id} = decodedMessage;
-    // console.log("logged in user : "+ _id);
-    const user = await User.findById(_id);
-    if(!user){
-      throw new Error("User not found");
-    }
-    res.send(user)
-    // console.log(user.firstName+" "+user.lastName);
-}
-catch(err){
-  res.send("something went wrong " + err);
-}
+app.get("/profile",userAuth,(req, res) => {
+  try {
+    const user = req.user;
+    res.send(user);
+  } catch (err) {
+    res.send("something went wrong " + err);
+  }
+});
+
+//send connextion request api
+app.post("/sendConnectionRequest",userAuth, async (req,res)=>{
+  console.log("sending request")
+  const user = req.user
+
+  res.send("request sent by "+ user.firstName)
 })
+
+
 
 // to get some data from the database, to get single user using emailid
 app.get("/user", async (req, res) => {
   const userEmail = req.body.email;
   try {
     const user = await User.findOne({ email: userEmail });
-    if (user.length === 0) {
-      res.status(404).send("User not found");
+    if (!user) {
+      return res.status(404).send("User not found");
     }
     res.status(200).send(user);
   } catch (err) {
@@ -155,7 +151,7 @@ app.patch("/user/:userId", async (req, res) => {
     if (data.skills.length > 10) {
       throw new Error("Skills should not be more than 10");
     }
-    const user = await User.findByIdAndUpdate({ _id: userId }, data, {
+    const user = await User.findByIdAndUpdate(userId, data, {
       runValidators: true,
     });
     res.send("User updated successfully");
