@@ -53,4 +53,17 @@ const validateEditProfileData = (req) => {
   return Object.keys(req.body).every((field) => allowedEditFields.includes(field));
 };
 
-module.exports = { validateSignUpData, validateEditProfileData };
+const validatePasswordChangeData = (req)=>{
+  const {oldPassword, newPassword, confirmPassword} = req.body;
+  if(!oldPassword || !newPassword || !confirmPassword){
+    throw new Error("All fields are required");
+  }
+  if(!validator.isStrongPassword(newPassword)){
+    throw new Error("Enter a strong password");
+  }
+  if(newPassword !== confirmPassword){
+    throw new Error("Passwords do not match");
+  }
+}
+
+module.exports = { validateSignUpData, validateEditProfileData, validatePasswordChangeData };
