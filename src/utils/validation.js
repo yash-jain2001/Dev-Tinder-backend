@@ -10,7 +10,8 @@ const validateSignUpData = (req) => {
     !password ||
     !age ||
     !gender ||
-    !skills
+    !skills ||
+    !profilePicture
   ) {
     throw new Error("All fields are required");
   }
@@ -49,6 +50,7 @@ const validateEditProfileData = (req) => {
     "gender",
     "skills",
     "about",
+    "profilePicture",
   ];
   return Object.keys(req.body).every((field) => allowedEditFields.includes(field));
 };
