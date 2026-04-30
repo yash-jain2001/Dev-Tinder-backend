@@ -1,6 +1,6 @@
 const express = require("express");
 const authRouter = express.Router();
-const validateSignUpData = require("../utils/validation");
+const { validateSignUpData } = require("../utils/validation");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
@@ -9,8 +9,7 @@ const jwt = require("jsonwebtoken");
 authRouter.post("/signup", async (req, res) => {
   try {
     // console.log(req.body)
-    const { firstName, lastName, email, password, age, gender, skills } =
-      req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     // validation of the data
     validateSignUpData(req);
@@ -25,15 +24,17 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       email,
       password: passwordHash,
-      age,
-      gender,
-      skills,
     }); // data is written in the postman to call a api, when called data is sent as request and recieved by server, then new instance is made and then saved to database
-    await user.save();
-    res.send("User created successfully");
+    const savedUser = await user.save();
+    const token = await savedUser.getJWT();
+    // add token to cookie and send response back to user
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 3600000),
+    });
+    res.json({ message: "User created successfully", data: savedUser });
   } catch (err) {
     console.log(err);
-    res.send(`User not created, Error: ${err}`);
+    res.status(400).send(`User not created, Error: ${err}`);
   }
 });
 
@@ -70,8 +71,7 @@ authRouter.post("/login", async (req, res) => {
 });
 
 authRouter.post("/logout", async (req, res) => {
-  res.cookie("token", null, { expires: new Date(Date.now())
-  });
+  res.cookie("token", null, { expires: new Date(Date.now()) });
   res.send("Logout successfully");
 });
 
