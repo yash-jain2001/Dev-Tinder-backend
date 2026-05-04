@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
   res.send("Server is up and running!");
 });
 
-connectDB()
+connectDB() 
   .then(() => {
     console.log("Database connected");
     if (process.env.NODE_ENV !== "production") {
